@@ -376,16 +376,20 @@ function gOzn(r,s){ return (s&&s.ozn&&r[s.ozn]) ? r[s.ozn] : ""; }
 function gEan(r){ return r.__EAN||""; }
 function gUnit(r,s){ return (s&&s.unit&&r[s.unit]) ? r[s.unit] : "ks"; }
 function gPrice(r,s){ return (s&&s.price) ? num(r[s.price]) : 0; }
-function gStocks(r,s){ return (s?s.stocks:[]).map(t=>({label:stockLabel(t),val:num(r[t])})); }
+function gStocks(r,s){ const all=(s?s.stocks:[]); return all.map(t=>({label:stockLabel(t,all),val:num(r[t])})); }
 function gStockSum(r,s){ return gStocks(r,s).reduce((a,x)=>a+x.val,0); }
 function gKey(r,s){ return gCode(r,s)||gOzn(r,s)||gEan(r)||gName(r,s); }
 // normalizace klíče pro párování (EAN = číslice; OZNACENI může mít různou velikost písmen)
 function norm(x){ return String(x==null?"":x).trim().toUpperCase().replace(/\s+/g,""); }
 // spojovací identifikátory položky: EAN i OZNACENI (ve STANDARDu se EAN jmenuje OZNACENI) — obojí je totéž
 function idsOf(r,s){ const out=[]; if(gEan(r)) out.push(norm(gEan(r))); if(s&&s.ozn&&r[s.ozn]) out.push(norm(r[s.ozn])); return [...new Set(out)]; }
-function stockLabel(tag){
+function stockLabel(tag,all){
   const t=tag.toUpperCase();
-  if(["ZASOBA","STOCK","SKLAD","QTY"].includes(t)) return "Skladem";
+  if(["ZASOBA","STOCK","SKLAD","QTY"].includes(t)){
+    // je-li vedle holé ZASOBA i lokalitní zásoba (ZASOBA_LIBEN…), bere se holá jako hlavní sklad = Malešice
+    const hasLoc=(all||[]).some(x=>/^(ZASOBA|SKLAD|STOCK)_/i.test(x));
+    return hasLoc?"Malešice":"Skladem";
+  }
   const rest=t.replace(/^ZASOBA_|^SKLAD_|^STOCK_/,"");
   const map={MALESICE:"Malešice",LIBEN:"Libeň"};
   return map[rest]||(rest.charAt(0)+rest.slice(1).toLowerCase());
@@ -610,7 +614,7 @@ $("#luser").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#lpass").focu
 $("#btnLogout").onclick=logout;
 
 (function init(){
-  $("#url1").value=store.get("feed1url")||DEFAULT_FEED1_URL;
+  $("#url1").value=DEFAULT_FEED1_URL;               // po otevření vždy výchozí feed
   $("#url2").value=store.get("feed2url")||"";
   renderCart();
   if(store.get("auth")==="1"){ enterApp(); }        // dřív přihlášen → rovnou dovnitř + načíst
