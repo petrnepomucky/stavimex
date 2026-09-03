@@ -614,7 +614,7 @@ $("#luser").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#lpass").focu
 $("#btnLogout").onclick=logout;
 
 (function init(){
-  $("#url1").value=DEFAULT_FEED1_URL;               // po otevření vždy výchozí feed
+  $("#url1").value=store.get("feed1url")||DEFAULT_FEED1_URL;   // pamatuje naposledy použitý feed, jinak výchozí
   $("#url2").value=store.get("feed2url")||"";
   renderCart();
   if(store.get("auth")==="1"){ enterApp(); }        // dřív přihlášen → rovnou dovnitř + načíst
