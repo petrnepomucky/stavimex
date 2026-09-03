@@ -156,14 +156,42 @@
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--graphite);color:#fff;padding:11px 16px;border-radius:10px;font-weight:600;opacity:0;transition:all .22s;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #toast.match{background:var(--amber-d)}
+
+  /* ---- přihlášení ---- */
+  .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 30% 15%, #0a52a6, #064386 55%, #053569)}
+  .loginbox{background:#fff;border-radius:14px;padding:26px 24px;width:360px;max-width:100%;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+  .loginbox .lbrand{display:inline-flex;align-items:center;font-weight:800;font-size:22px;color:var(--graphite)}
+  .loginbox .lbrand .sq{width:15px;height:15px;background:var(--amber);border-radius:2px;margin-right:9px}
+  .loginbox .lsub{color:var(--muted);font-size:13px;margin:3px 0 18px}
+  .loginbox label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 4px}
+  .loginbox .lbtn{width:100%;margin-top:18px;background:var(--amber);color:#fff;border:0;padding:12px;border-radius:8px;font-weight:700;font-size:15px}
+  .loginbox .lbtn:hover{background:var(--amber-d)}
+  .loginbox .lerr{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px}
 </style>
 </head>
 <body>
+
+<div class="login" id="login">
+  <div class="loginbox">
+    <div class="lbrand"><span class="sq"></span>Katalog</div>
+    <div class="lsub">Přihlaste se pro přístup do katalogu</div>
+    <label>Uživatel</label>
+    <input class="txt" id="luser" autocomplete="username" placeholder="Uživatel">
+    <label>Heslo</label>
+    <input class="txt" id="lpass" type="password" autocomplete="current-password" placeholder="Heslo">
+    <button class="lbtn" id="lbtn">Přihlásit</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
 
 <header>
   <div class="brand"><span class="sq"></span>Katalog</div>
   <div class="sub">poptávkový nástroj</div>
   <div class="spacer"></div>
+  <button class="toolbtn" id="btnLogout" title="Odhlásit">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h4v16h-4"/><path d="M10 12H3M6 8l-4 4 4 4"/></svg>
+    <span class="txtlbl">Odhlásit</span>
+  </button>
   <button class="toolbtn" id="btnScan" title="Skenovat kód">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14"/></svg>
     <span class="txtlbl">Skenovat kód</span>
@@ -285,6 +313,10 @@
 /* ===== KONFIGURACE ===== */
 const POPTAVKA_EMAIL = "poptavka@example.cz";   // kam poslat poptávku (mailto)
 const ODESLAT_ENDPOINT = "";                    // volitelně URL GAS doPost(e); prázdné = mailto
+const DEFAULT_FEED1_URL = "https://script.google.com/macros/s/AKfycbxtvbnGRYZNZuC6W-OhJr5ZCimqLFGcq-5NHv6g_3ZZH08sCwJENib12pRVUTkl9PzVaA/exec";
+// Přihlášení (pozn.: jde o jednoduchou HTML bránu, ne o skutečné zabezpečení — údaje jsou v kódu stránky)
+const AUTH_USER = "Stavimex";
+const AUTH_PASS = "BigMat2026";
 
 /* ===== STAV ===== */
 let products=[], SC=null;            // feed 1 + jeho schéma
@@ -562,7 +594,28 @@ $("#sendBtn").onclick=sendPoptavka;
 $("#copyBtn").onclick=()=>{ if(!cart.size){setStat("#sendStat","Košík je prázdný.","err");return;}
   navigator.clipboard.writeText(buildText()).then(()=>setStat("#sendStat","Poptávka zkopírována do schránky.","ok")).catch(()=>setStat("#sendStat","Kopírování se nepodařilo.","err")); };
 
-(function init(){ $("#url1").value=store.get("feed1url")||""; $("#url2").value=store.get("feed2url")||""; renderCart(); })();
+/* ===== PŘIHLÁŠENÍ + AUTO-NAČTENÍ ===== */
+let autoLoaded=false;
+function autoLoad(){ if(autoLoaded)return; autoLoaded=true; const u=$("#url1").value.trim(); if(u) loadFeed1FromUrl(u); }
+function enterApp(){ $("#login").style.display="none"; autoLoad(); }
+function tryLogin(){
+  const u=$("#luser").value.trim(), p=$("#lpass").value;
+  if(u.toLowerCase()===AUTH_USER.toLowerCase() && p===AUTH_PASS){ store.set("auth","1"); $("#lerr").textContent=""; enterApp(); }
+  else{ $("#lerr").textContent="Nesprávný uživatel nebo heslo."; $("#lpass").value=""; $("#lpass").focus(); }
+}
+function logout(){ store.set("auth",""); location.reload(); }
+$("#lbtn").onclick=tryLogin;
+$("#lpass").addEventListener("keydown",e=>{ if(e.key==="Enter") tryLogin(); });
+$("#luser").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#lpass").focus(); });
+$("#btnLogout").onclick=logout;
+
+(function init(){
+  $("#url1").value=store.get("feed1url")||DEFAULT_FEED1_URL;
+  $("#url2").value=store.get("feed2url")||"";
+  renderCart();
+  if(store.get("auth")==="1"){ enterApp(); }        // dřív přihlášen → rovnou dovnitř + načíst
+  else { $("#luser").focus(); }
+})();
 </script>
 </body>
 </html>
