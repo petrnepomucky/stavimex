@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Katalog a poptávka</title>
+<title>Katalog a poptávka — STAVIMEX</title>
 <style>
   :root{
     /* BigMat: modrá #064386, červená #E02125 */
@@ -21,15 +20,24 @@
   input,select,textarea{font-family:inherit;font-size:inherit}
   a{color:var(--amber-d)}
 
-  header{position:sticky;top:0;z-index:30;background:var(--graphite);color:#fff;display:flex;align-items:center;gap:12px;padding:11px 18px;box-shadow:0 1px 0 rgba(0,0,0,.25)}
-  header .brand{font-weight:700;letter-spacing:.2px;font-size:18px;white-space:nowrap;display:inline-flex;align-items:center}
-  header .brand .sq{width:13px;height:13px;background:var(--amber);border-radius:2px;margin-right:9px}
-  header .sub{color:#b9c7da;font-size:12.5px;margin-left:2px}
+  /* kontaktní lišta jako na eshopu */
+  .topbar{background:var(--graphite-2);color:#dbe6f4;font-size:12.5px;padding:6px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .topbar .tb-r{margin-left:auto;color:#eaf1fa}
+  .topbar b{color:#fff}
+  @media(max-width:640px){.topbar{font-size:11.5px;padding:6px 12px;gap:10px}}
+
+  header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--graphite-2),var(--graphite));color:#fff;display:flex;align-items:center;gap:12px;padding:11px 18px;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+  header .brand{font-weight:800;letter-spacing:.2px;font-size:20px;white-space:nowrap;display:inline-flex;align-items:center}
+  header .brand .sq{width:13px;height:13px;background:var(--amber);border-radius:2px;margin:0 9px 0 2px}
+  header .brand .bm{background:#fff;color:var(--graphite);padding:2px 8px;border-radius:4px;font-weight:900;letter-spacing:-.3px}
+  header .sub{color:#cfe0f2;font-size:13px;margin-left:2px;border-left:1px solid rgba(255,255,255,.35);padding-left:12px}
   header .spacer{flex:1}
-  .toolbtn{background:var(--graphite-2);color:#fff;border:1px solid rgba(255,255,255,.28);padding:8px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;font-weight:600}
-  .toolbtn:hover{background:#0b5cbc}
+  .toolbtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);padding:8px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;font-weight:600}
+  .toolbtn:hover{background:rgba(255,255,255,.22)}
   .toolbtn.accent{background:var(--amber);border-color:var(--amber);color:#fff}
   .toolbtn.accent:hover{background:var(--amber-d)}
+  .toolbtn.calc{background:#fff;border-color:#fff;color:var(--graphite)}
+  .toolbtn.calc:hover{background:#eef2f7}
   .cart-count{background:#fff;color:var(--graphite);border-radius:999px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800}
 
   main{max-width:1180px;margin:0 auto;padding:16px 18px 120px}
@@ -47,6 +55,8 @@
   .btn:hover{background:#f4f5f6}
   .btn.primary{background:var(--amber);border-color:var(--amber);color:#fff}
   .btn.primary:hover{background:var(--amber-d)}
+  .btn.blue{background:var(--graphite);border-color:var(--graphite);color:#fff}
+  .btn.blue:hover{background:var(--graphite-2)}
   .btn.ghost{background:transparent;border-color:transparent;color:var(--amber-d);padding:8px 6px}
   .status{font-size:12.5px;color:var(--muted);margin-top:9px}
   .status.err{color:var(--danger)}
@@ -65,6 +75,12 @@
   .listhead{display:grid;grid-template-columns:1fr 180px 210px;gap:12px;padding:10px 16px;background:#fafbfc;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
   .item{display:grid;grid-template-columns:1fr 180px 210px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2)}
   .item:hover{background:#fafbfc}
+  .c-name{display:flex;gap:12px;align-items:flex-start}
+  .c-name .txtcol{min-width:0}
+  .c-thumb{width:54px;height:54px;flex:0 0 auto;border:1px solid var(--line);border-radius:8px;object-fit:contain;background:#fff;padding:2px}
+  .c-name .pname a{color:inherit;text-decoration:none}
+  .c-name .pname a:hover{color:var(--graphite);text-decoration:underline}
+  .citem-thumb{width:42px;height:42px;flex:0 0 auto;border:1px solid var(--line);border-radius:7px;object-fit:contain;background:#fff;padding:2px}
   .c-name .pname{font-weight:600;line-height:1.3}
   .c-name .meta{color:var(--muted);font-size:12.5px;margin-top:2px}
   .c-name .meta2{color:var(--muted);font-size:12px;margin-top:2px;opacity:.85}
@@ -80,8 +96,8 @@
   .qtybox button:hover{background:#f1f2f4}
   .qtybox input{width:46px;height:34px;border:0;text-align:center;border-left:1px solid var(--line);border-right:1px solid var(--line)}
   .qtybox input:focus{outline:none}
-  .addbtn{background:var(--graphite);color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:700;height:34px}
-  .addbtn:hover{background:var(--graphite-2)}
+  .addbtn{background:var(--amber);color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:700;height:34px}
+  .addbtn:hover{background:var(--amber-d)}
   .empty{padding:44px 16px;text-align:center;color:var(--muted)}
   .empty strong{color:var(--ink)}
 
@@ -99,7 +115,7 @@
   }
   @media(max-width:560px){
     header{gap:8px;padding:10px 12px}
-    header .brand{font-size:16px}
+    header .brand{font-size:17px}
     header .sub{display:none}
     .toolbtn{padding:9px 11px}
     .toolbtn .txtlbl{display:none}
@@ -115,6 +131,7 @@
   .citem{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--line-2)}
   .citem .n{font-weight:600;font-size:14px}
   .citem .m{color:var(--muted);font-size:12px;margin-top:1px}
+  .citem .badge-calc{display:inline-block;font-size:10.5px;font-weight:700;color:var(--graphite);background:var(--blue-soft);border-radius:4px;padding:1px 6px;margin-top:4px}
   .citem .rm{margin-left:auto;background:transparent;border:0;color:var(--danger);font-weight:700;align-self:flex-start;padding:2px 4px}
   .citem .qtybox button{width:34px;height:36px}
   .citem .qtybox input{height:36px}
@@ -131,20 +148,69 @@
   .backdrop.show{opacity:1;pointer-events:auto}
 
   .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
-  .modal.show{display:flex}
-  .modal .box{background:#fff;border-radius:14px;width:480px;max-width:100%;overflow:hidden;max-height:92vh;display:flex;flex-direction:column}
+  .modal.show{display:flex;background:rgba(16,26,43,.55)}
+  .modal .box{background:#fff;border-radius:14px;width:480px;max-width:100%;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;border:1px solid rgba(0,0,0,.15);box-shadow:0 28px 80px rgba(0,0,0,.45)}
+  .modal .box.wide{width:660px}
+  #calcModal .box{border:2px solid var(--graphite);border-top:6px solid var(--amber)}
   .modal .mhead{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--graphite);color:#fff}
   .modal .mhead b{font-size:16px}
   .modal .mhead .x{margin-left:auto;background:transparent;border:0;color:#fff;font-size:26px;width:34px;height:34px}
   .modal .mbody{padding:16px;overflow:auto}
+  .modal .mfoot{border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fafbfc}
   #scanview{width:100%;aspect-ratio:4/3;background:#111;border-radius:10px;object-fit:cover;display:none}
   .scanline{font-size:13px;color:var(--muted);margin:10px 0}
   .lastscan{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;color:var(--ink)}
 
+  /* ===== KALKULAČKA SDK ===== */
+  .estimate-warn{
+    background:var(--amber-soft);border:2px solid var(--amber);color:var(--amber-d);
+    border-radius:10px;padding:12px 14px;margin-bottom:16px;font-weight:800;
+    font-size:17px;line-height:1.3;display:flex;gap:10px;align-items:center;
+  }
+  .estimate-warn .ico{font-size:22px;flex:0 0 auto}
+  .estimate-warn small{display:block;font-weight:600;font-size:12.5px;color:var(--amber-d);opacity:.9;margin-top:2px}
+  .calc-sec{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:16px 0 7px}
+  .calc-sec:first-child{margin-top:0}
+  .segc{display:flex;gap:8px;flex-wrap:wrap}
+  .segc button{flex:1 1 auto;min-width:80px;padding:9px 8px;font-weight:700;font-size:13.5px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px}
+  .segc button.active{background:var(--graphite);border-color:var(--graphite);color:#fff}
+  .segc button:hover:not(.active){border-color:var(--graphite)}
+  .otv-head,.otv{display:grid;grid-template-columns:1.05fr .9fr .9fr .55fr auto 30px;gap:7px;align-items:center}
+  .otv-head{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:5px;padding:0 2px}
+  .otv{margin-bottom:7px}
+  .otv input,.otv select{padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;width:100%}
+  .otv .o-zes{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
+  .otv .o-del{border:1px solid var(--line);background:#fff;color:var(--danger);border-radius:7px;height:32px;font-size:17px;font-weight:800}
+  .otv .o-del:hover{background:#fbeaea}
+  .o-add{margin-top:2px;border:1px dashed var(--graphite);background:var(--blue-soft);color:var(--graphite);padding:8px;width:100%;border-radius:8px;font-weight:700;font-size:13px}
+  .o-add:hover{background:#e0ecf9}
+  .o-sum{margin-top:7px;font-size:12.5px;color:var(--muted)}
+  .o-sum b{color:var(--ink)}
+  @media(max-width:620px){
+    .otv-head{display:none}
+    .otv{grid-template-columns:1fr 1fr;gap:8px;padding:10px;border:1px solid var(--line);border-radius:9px}
+    .otv .o-zes{grid-column:1 / -1}
+    .otv .o-del{width:100%}
+  }
+  .help-btn{width:20px;height:20px;border-radius:50%;border:1px solid var(--graphite);background:#fff;color:var(--graphite);font-weight:800;font-size:12px;line-height:1;flex:0 0 auto}
+  .help-btn:hover{background:var(--graphite);color:#fff}
+  .help-box{display:none;margin-top:9px;padding:11px;border:1px solid var(--line);background:var(--blue-soft);border-radius:9px;font-size:12.5px;color:#31415a}
+  .help-box.open{display:block}
+  .help-box svg{width:100%;height:auto;display:block;margin-top:4px}
+  .calc-hero{background:var(--blue-soft);border:1px solid #cfe0f2;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:16px;margin:14px 0}
+  .calc-hero .num{font-size:46px;line-height:1;font-weight:900;color:var(--amber-d)}
+  .calc-hero .lab strong{display:block;font-size:15px}
+  .calc-hero .lab span{color:var(--muted);font-size:12.5px}
+  table.bom{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.bom th,table.bom td{padding:7px 10px;border-bottom:1px solid var(--line-2);text-align:left;vertical-align:top}
+  table.bom thead th{background:#fafbfc;border-bottom:2px solid var(--amber);font-size:12px;color:var(--muted)}
+  table.bom td.q{text-align:right;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.bom td.u{color:var(--muted);white-space:nowrap}
+  table.bom tr.grp td{font-weight:800;color:var(--graphite);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;border-bottom:none;padding-top:12px;padding-bottom:2px}
+
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--graphite);color:#fff;padding:11px 16px;border-radius:10px;font-weight:600;opacity:0;transition:all .22s;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* ---- přihlášení (prozatím vypnuto přes LOGIN_ENABLED) ---- */
   .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 30% 15%, #0a52a6, #064386 55%, #053569)}
   .loginbox{background:#fff;border-radius:14px;padding:26px 24px;width:360px;max-width:100%;box-shadow:0 24px 70px rgba(0,0,0,.35)}
   .loginbox .lbrand{display:inline-flex;align-items:center;font-weight:800;font-size:22px;color:var(--graphite)}
@@ -171,10 +237,20 @@
   </div>
 </div>
 
+<div class="topbar">
+  <span>Stavebniny Malešice: <b>+420 777 324 248</b></span>
+  <span>Stavebniny Libeň: <b>+420 608 324 247</b></span>
+  <span class="tb-r">STAVIMEX Praha, a.s.</span>
+</div>
+
 <header>
-  <div class="brand"><span class="sq"></span>Katalog</div>
-  <div class="sub">poptávkový nástroj</div>
+  <div class="brand"><span class="bm">BigMat</span></div>
+  <div class="sub">STAVIMEX Praha, a.s. · poptávkový nástroj</div>
   <div class="spacer"></div>
+  <button class="toolbtn calc" id="btnCalc" title="Kalkulačka SDK příčky">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M12 10h2M16 10h.01M8 14h2M12 14h2M16 14h.01M8 18h6"/></svg>
+    <span class="txtlbl">SDK příčka</span>
+  </button>
   <button class="toolbtn" id="btnCfg" title="Zdroj dat / feed">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 7 2.6h.1A1.6 1.6 0 0 0 8 1.1V1a2 2 0 1 1 4 0v.1A1.6 1.6 0 0 0 15 2.6a1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
     <span class="txtlbl">Feed</span>
@@ -210,6 +286,110 @@
   </div>
 </main>
 
+<!-- ===== KALKULAČKA SDK PŘÍČKY ===== -->
+<div class="modal" id="calcModal">
+  <div class="box wide">
+    <div class="mhead"><b>Kalkulačka SDK příčky</b><button class="x" id="calcClose">×</button></div>
+    <div class="mbody">
+
+      <div class="estimate-warn">
+        <span class="ico">⚠</span>
+        <span>POUZE ORIENTAČNÍ ODHAD MATERIÁLU
+          <small>Množství i skladbu příčky ověřte před objednávkou podle projektu a systému výrobce.</small>
+        </span>
+      </div>
+
+      <div class="calc-sec">Rozměry příčky</div>
+      <div class="feedgrid" style="gap:10px">
+        <div><label class="lbl-f">Délka příčky (m)</label><input class="txt" id="cDelka" type="number" min="0" step="0.01" value="5"></div>
+        <div><label class="lbl-f">Výška příčky (m)</label><input class="txt" id="cVyska" type="number" min="0" step="0.01" value="2.75"></div>
+      </div>
+
+      <div class="calc-sec">Otvory — dveře a okna (rozměry v mm)</div>
+      <div class="otv-head"><span>Typ</span><span>Šířka</span><span>Výška</span><span>Počet</span><span>Zesílení</span><span></span></div>
+      <div id="cOtvory"></div>
+      <button class="o-add" id="cOtvAdd">+ Přidat otvor</button>
+      <div class="o-sum">Odečteno z plochy: <b id="cOtvSum">0,00 m²</b> · zesílení otvorů zvlášť přidá profil na jejich ostění.</div>
+
+      <div class="calc-sec">Skladba</div>
+      <div class="feedgrid" style="gap:10px">
+        <div>
+          <label class="lbl-f">Opláštění stran</label>
+          <div class="segc" id="cStrany"><button data-val="2" class="active">Oboustranné</button><button data-val="1">Jednostranné</button></div>
+        </div>
+        <div>
+          <label class="lbl-f">Vrstev na stranu</label>
+          <div class="segc" id="cVrstvy"><button data-val="1" class="active">Jednoduché</button><button data-val="2">Dvojité</button></div>
+        </div>
+      </div>
+
+      <div class="feedgrid" style="gap:10px;margin-top:10px">
+        <div>
+          <label class="lbl-f">Rozměr SDK desky</label>
+          <select class="txt" id="cDeska">
+            <option value="2.5">1250 × 2000 mm (2,50 m²)</option>
+            <option value="3.125">1250 × 2500 mm (3,13 m²)</option>
+            <option value="3.25" selected>1250 × 2600 mm (3,25 m²)</option>
+            <option value="3.75">1250 × 3000 mm (3,75 m²)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl-f">Profil CW</label>
+          <select class="txt" id="cCw"><option value="50">CW 50</option><option value="75" selected>CW 75</option><option value="100">CW 100</option></select>
+        </div>
+      </div>
+
+      <div class="feedgrid" style="gap:10px;margin-top:10px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="lbl-f" style="margin:0">Osová vzdálenost (mm)</label>
+            <button class="help-btn" id="cHelpBtn" title="Co to je?">?</button>
+          </div>
+          <select class="txt" id="cRoztec" style="margin-top:4px"><option value="0.4">400</option><option value="0.6">600</option><option value="0.625" selected>625</option></select>
+        </div>
+        <div><label class="lbl-f">Prořez / rezerva (%)</label><input class="txt" id="cProrez" type="number" min="0" step="1" value="10"></div>
+      </div>
+
+      <div class="help-box" id="cHelpBox">
+        <b>Osová vzdálenost</b> = rozteč mezi středy (osami) sousedních svislých profilů CW, ne mezera mezi nimi. Menší rozteč = víc profilů = pevnější příčka. Standard <b>625 mm</b> vychází z šířky desky 1250 mm (dosedne na oba okraje i střed).
+        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma osové vzdálenosti">
+          <rect x="40" y="22" width="320" height="22" fill="#efe4c4" stroke="#b9a76a"/>
+          <text x="200" y="37" text-anchor="middle" font-size="11" fill="#6b5e2f">SDK deska — šířka 1250 mm</text>
+          <line x1="40" y1="44" x2="40" y2="175" stroke="#c9c9c9" stroke-dasharray="3 3"/>
+          <line x1="200" y1="44" x2="200" y2="175" stroke="#c9c9c9" stroke-dasharray="3 3"/>
+          <line x1="360" y1="44" x2="360" y2="175" stroke="#c9c9c9" stroke-dasharray="3 3"/>
+          <g fill="#8c8c8c" stroke="#5f5f5f"><rect x="34" y="50" width="12" height="92"/><rect x="194" y="50" width="12" height="92"/><rect x="354" y="50" width="12" height="92"/></g>
+          <text x="200" y="158" text-anchor="middle" font-size="10.5" fill="#555">svislé profily CW</text>
+          <g stroke="#e02125" stroke-width="1.4">
+            <line x1="40" y1="112" x2="200" y2="112"/><line x1="200" y1="112" x2="360" y2="112"/>
+            <path d="M40 112 l7 -4 v8 z" fill="#e02125" stroke="none"/><path d="M200 112 l-7 -4 v8 z" fill="#e02125" stroke="none"/>
+            <path d="M200 112 l7 -4 v8 z" fill="#e02125" stroke="none"/><path d="M360 112 l-7 -4 v8 z" fill="#e02125" stroke="none"/>
+          </g>
+          <g font-size="11" font-weight="bold" fill="#e02125" text-anchor="middle">
+            <rect x="98" y="100" width="44" height="16" fill="#fff"/><text x="120" y="112">625 mm</text>
+            <rect x="258" y="100" width="44" height="16" fill="#fff"/><text x="280" y="112">625 mm</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="calc-hero">
+        <div class="num" id="cResDesky">–</div>
+        <div class="lab"><strong>ks SDK desek</strong><span id="cResDeskaTyp">včetně prořezu</span></div>
+      </div>
+
+      <table class="bom">
+        <thead><tr><th>Položka</th><th>Množství</th><th>MJ</th></tr></thead>
+        <tbody id="cBom"></tbody>
+      </table>
+
+    </div>
+    <div class="mfoot">
+      <div class="row"><button class="btn primary" id="cAddCart" style="flex:1">Přidat vše do poptávky</button><button class="btn" id="cClose2">Zavřít</button></div>
+      <div class="status" id="cStat" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
 <!-- settings / feed source -->
 <div class="modal" id="cfgModal">
   <div class="box">
@@ -224,7 +404,7 @@
         <label class="btn" style="cursor:pointer">Nahrát XML soubor<input type="file" id="file1" accept=".xml,text/xml,application/xml" hidden></label>
         <button class="btn ghost" id="paste1toggle">Vložit XML ručně</button>
       </div>
-      <textarea class="txt" id="xml1" placeholder="<PRODUKT>…</PRODUKT>" style="display:none;margin-top:8px"></textarea>
+      <textarea class="txt" id="xml1" placeholder="&lt;PRODUKT&gt;…&lt;/PRODUKT&gt;" style="display:none;margin-top:8px"></textarea>
       <div class="row" id="paste1row" style="display:none;margin-top:8px"><button class="btn primary" id="parse1">Zpracovat vložené XML</button></div>
       <div class="status" id="stat1">Feed se načítá automaticky po spuštění.</div>
     </div>
@@ -236,7 +416,7 @@
 <aside class="cart" id="cart" aria-label="Poptávka">
   <div class="chead"><b>Poptávka</b><span class="pill" id="cartItemsPill" style="background:rgba(255,255,255,.2);color:#fff">0 položek</span><button class="x" id="cartClose">×</button></div>
   <div class="cscroll">
-    <div class="items" id="cartItems"><div class="empty" style="padding:30px 6px">Košík je prázdný.<br>Přidej zboží z katalogu nebo naskenuj kód.</div></div>
+    <div class="items" id="cartItems"><div class="empty" style="padding:30px 6px">Košík je prázdný.<br>Přidej zboží z katalogu, naskenuj kód nebo použij kalkulačku SDK.</div></div>
     <div class="form">
       <div class="sec">Kontaktní údaje</div>
       <div class="feedgrid" style="gap:8px">
@@ -281,10 +461,10 @@
 "use strict";
 
 /* ===== KONFIGURACE ===== */
-const POPTAVKA_EMAIL = "poptavka@example.cz";   // kam poslat poptávku (mailto)
-const ODESLAT_ENDPOINT = "";                    // volitelně URL GAS doPost(e); prázdné = mailto
-const DEFAULT_FEED1_URL = "https://script.google.com/macros/s/AKfycbznklNrf0nnhQIP5mJpDOj9G6YDVqLzZTCo8YAtuYF9Vn_OMGPM5VcWsjolekxFmY-a/exec";
-// Přihlášení: PROZATÍM VYPNUTO. Zapneš změnou na true (údaje níže; jde jen o jednoduchou HTML bránu, ne skutečné zabezpečení).
+const POPTAVKA_EMAIL = "poptavka@example.cz";
+const ODESLAT_ENDPOINT = "";
+const DEFAULT_FEED1_URL = "https://script.google.com/macros/s/AKfycbwphIdUYPAWhODhp1sAHfqzd1DpzD7-NZYF9XJ4wAIdAvq1xD9Mkc0WlTDC99cgAlmT9w/exec";
+const OLD_DEFAULT_FEEDS = ["https://script.google.com/macros/s/AKfycbznklNrf0nnhQIP5mJpDOj9G6YDVqLzZTCo8YAtuYF9Vn_OMGPM5VcWsjolekxFmY-a/exec"];
 const LOGIN_ENABLED = false;
 const AUTH_USER = "Stavimex";
 const AUTH_PASS = "BigMat2026";
@@ -303,7 +483,9 @@ const RX={
   ean:[/EAN/i],
   unit:[/^MJ$/i,/^UNIT$/i,/JEDNOTKA/i],
   price:[/OC_SDPH/i,/CENA_SDPH/i,/CENA_S_DPH/i,/^CENA$/i,/^PRICE$/i,/CENA/i,/PRICE/i],
-  stock:[/ZASOBA/i,/SKLAD/i,/STOCK/i,/^QTY$/i]
+  stock:[/ZASOBA/i,/SKLAD/i,/STOCK/i,/^QTY$/i,/LIBEN/i,/LIBEŇ/i,/MALESICE/i,/MALEŠICE/i,/DOSTUP/i],
+  img:[/URL_OBRAZKU/i,/OBRAZKU/i,/OBRAZEK/i,/^IMG$/i,/IMAGE/i,/FOTO/i],
+  link:[/URL_PRODUKTU/i,/PRODUKTU/i,/^URL$/i,/ODKAZ/i,/^LINK$/i]
 };
 function findRecords(doc){
   const els=Array.from(doc.getElementsByTagName("*"));
@@ -331,9 +513,10 @@ function detectSchema(records){
   records.forEach(r=>Object.keys(r).forEach(k=>{ if(!k.startsWith("__")&&!seen.has(k)){seen.add(k);tags.push(k);} }));
   const pick=pats=>{ for(const re of pats) for(const t of tags) if(re.test(t)) return t; return null; };
   const s={ name:pick(RX.name),code:pick(RX.code),ozn:pick(RX.ozn),ean:pick(RX.ean),unit:pick(RX.unit),price:pick(RX.price),
+            img:pick(RX.img),link:pick(RX.link),
             stocks:tags.filter(t=>RX.stock.some(re=>re.test(t))), tags };
   if(s.ozn&&s.ozn===s.code) s.ozn=null;
-  s.mapped=new Set([s.name,s.code,s.ozn,s.ean,s.unit,s.price,...s.stocks].filter(Boolean).map(x=>x.toUpperCase()));
+  s.mapped=new Set([s.name,s.code,s.ozn,s.ean,s.unit,s.price,s.img,s.link,...s.stocks].filter(Boolean).map(x=>x.toUpperCase()));
   return s;
 }
 
@@ -345,24 +528,39 @@ function gOzn(r,s){ return (s&&s.ozn&&r[s.ozn]) ? r[s.ozn] : ""; }
 function gEan(r){ return r.__EAN||""; }
 function gUnit(r,s){ return (s&&s.unit&&r[s.unit]) ? r[s.unit] : "ks"; }
 function gPrice(r,s){ return (s&&s.price) ? num(r[s.price]) : 0; }
+function gImg(r,s){ const u=(s&&s.img&&r[s.img])?String(r[s.img]).trim():""; return /^https?:\/\//i.test(u)?u:""; }
+function gUrl(r,s){ const u=(s&&s.link&&r[s.link])?String(r[s.link]).trim():""; return /^https?:\/\//i.test(u)?u:""; }
+function fold(x){ return String(x==null?"":x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
 function gStocks(r,s){ const all=(s?s.stocks:[]); return all.map(t=>({label:stockLabel(t,all),val:num(r[t])})); }
 function gStockSum(r,s){ return gStocks(r,s).reduce((a,x)=>a+x.val,0); }
 function gKey(r,s){ return gCode(r,s)||gOzn(r,s)||gEan(r)||gName(r,s); }
 function norm(x){ return String(x==null?"":x).trim().toUpperCase().replace(/\s+/g,""); }
 function stockLabel(tag,all){
   const t=tag.toUpperCase();
+  if(/LIBE[NŇ]/.test(t)) return "Libeň";
+  if(/MALE[SŠ]ICE/.test(t)) return "Malešice";
   if(["ZASOBA","STOCK","SKLAD","QTY"].includes(t)){
-    const hasLoc=(all||[]).some(x=>/^(ZASOBA|SKLAD|STOCK)_/i.test(x));
+    const hasLoc=(all||[]).some(x=>x.toUpperCase()!==t && /LIBE[NŇ]|MALE[SŠ]ICE|_/i.test(x));
     return hasLoc?"Malešice":"Skladem";
   }
-  const rest=t.replace(/^ZASOBA_|^SKLAD_|^STOCK_/,"");
-  const map={MALESICE:"Malešice",LIBEN:"Libeň"};
-  return map[rest]||(rest.charAt(0)+rest.slice(1).toLowerCase());
+  const rest=t.replace(/^ZASOBA_|^SKLAD_|^STOCK_|^DOSTUP\w*_/,"");
+  return rest.charAt(0)+rest.slice(1).toLowerCase();
 }
 function extraFields(r,s){
   const mapped=s?s.mapped:new Set();
   return Object.keys(r).filter(k=>!k.startsWith("__")&&!mapped.has(k)&&r[k]!=="")
     .map(k=>({k:k.toLowerCase().replace(/_/g," "), v:r[k]}));
+}
+/* najdi produkt ve feedu podle tokenů (všechny musí být v názvu) */
+function findProduct(tokens){
+  if(!products.length||!tokens||!tokens.length) return null;
+  const cand=products.filter(p=>{
+    const hay=fold(gName(p,SC)+" "+gOzn(p,SC)+" "+gCode(p,SC));
+    return tokens.every(t=>hay.includes(fold(t)));
+  });
+  if(!cand.length) return null;
+  cand.sort((a,b)=>(gStockSum(b,SC)>0?1:0)-(gStockSum(a,SC)>0?1:0));
+  return cand[0];
 }
 
 /* ===== NAČÍTÁNÍ ===== */
@@ -374,12 +572,12 @@ function ingestFeed1(xml){
   const list=parseFeed(xml);
   if(!list.length){ setStat("#stat1","V XML se nepodařilo najít žádné položky.","err"); return; }
   products=list; SC=detectSchema(list);
-  const cols=[SC.name&&"název",SC.code&&"číslo",SC.ozn&&"označení",SC.ean&&"EAN",SC.stocks.length&&(SC.stocks.length+"× sklad")].filter(Boolean).join(", ");
-  setStat("#stat1","Načteno "+list.length+" položek. Rozpoznáno: "+cols+".","ok");
+  const stockLbls=SC.stocks.map(t=>stockLabel(t,SC.stocks)).join(", ")||"žádné";
+  setStat("#stat1","Načteno "+list.length+" položek. Rozpoznané sklady: "+stockLbls+". Pole ve feedu: "+SC.tags.join(", "),"ok");
   render();
 }
 
-/* ===== RENDER ===== */
+/* ===== RENDER KATALOGU ===== */
 function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString("cs-CZ"); }
 function fmtKc(n){ return n.toLocaleString("cs-CZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" Kč"; }
 function filtered(){
@@ -408,11 +606,17 @@ function render(){
     idParts.push(esc(gUnit(p,SC)));
     const extra=extraFields(p,SC);
     const extraHtml = extra.length?`<div class="meta2">${extra.map(e=>esc(e.k)+": "+esc(e.v)).join(" &nbsp;·&nbsp; ")}</div>`:"";
+    const img=gImg(p,SC), url=gUrl(p,SC);
+    const thumb = img?`<img class="c-thumb" src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";
+    const nameHtml = url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(gName(p,SC))}</a>`:esc(gName(p,SC));
     return `<div class="item">
       <div class="c-name">
-        <div class="pname">${esc(gName(p,SC))}</div>
-        <div class="meta">${idParts.join(" &nbsp;·&nbsp; ")}</div>
-        ${extraHtml}
+        ${thumb}
+        <div class="txtcol">
+          <div class="pname">${nameHtml}</div>
+          <div class="meta">${idParts.join(" &nbsp;·&nbsp; ")}</div>
+          ${extraHtml}
+        </div>
       </div>
       <div class="c-stock">${stockHtml}</div>
       <div class="c-act">
@@ -423,33 +627,47 @@ function render(){
   }).join("");
 }
 
-/* ===== KOŠÍK ===== */
+/* ===== KOŠÍK (feed i vlastní položky) ===== */
+function itName(it){ return it.custom?it.custom.name:gName(it.rec,SC); }
+function itUnit(it){ return it.custom?(it.custom.unit||"ks"):gUnit(it.rec,SC); }
+function itPrice(it){ return it.custom?(+it.custom.price||0):gPrice(it.rec,SC); }
+function itCode(it){ return it.custom?(it.custom.code||""):gCode(it.rec,SC); }
+function itOzn(it){ return it.custom?"":gOzn(it.rec,SC); }
+function itEan(it){ return it.custom?(it.custom.ean||""):gEan(it.rec); }
+function itImg(it){ return it.custom?"":gImg(it.rec,SC); }
+function itIdLine(it){ return [itCode(it)&&("č. "+itCode(it)), itOzn(it), itEan(it)&&("EAN "+itEan(it)), itUnit(it)].filter(Boolean).join(" · "); }
+
 function addToCart(idx,qty){ const p=products[idx],k=gKey(p,SC),cur=cart.get(k); qty=Math.max(1,parseInt(qty)||1);
   if(cur){cur.qty+=qty;}else{cart.set(k,{rec:p,qty});} renderCart(); saveDraft(); }
+function addCustomToCart(it){ const k="C::"+it.name; const cur=cart.get(k); const qty=Math.max(1,parseInt(it.qty)||1);
+  if(cur){cur.qty+=qty;}else{cart.set(k,{custom:{name:it.name,unit:it.unit||"ks",price:+it.price||0,code:it.code||"",ean:it.ean||""},qty}); }
+  renderCart(); saveDraft(); }
 function setCartQty(k,qty){ const it=cart.get(k); if(!it)return; qty=parseInt(qty)||0; if(qty<=0){cart.delete(k);}else{it.qty=qty;} renderCart(); saveDraft(); }
 function removeFromCart(k){ cart.delete(k); renderCart(); saveDraft(); }
 function plural(n){ return n===1?" položka":(n>=2&&n<=4?" položky":" položek"); }
 function renderCart(){
   const box=$("#cartItems"), n=cart.size;
   $("#cartCount").textContent=n; $("#cartItemsPill").textContent=n+plural(n);
-  if(!n){ box.innerHTML=`<div class="empty" style="padding:30px 6px">Košík je prázdný.<br>Přidej zboží z katalogu nebo naskenuj kód.</div>`; $("#cartTotal").textContent=fmtKc(0); return; }
+  if(!n){ box.innerHTML=`<div class="empty" style="padding:30px 6px">Košík je prázdný.<br>Přidej zboží z katalogu, naskenuj kód nebo použij kalkulačku SDK.</div>`; $("#cartTotal").textContent=fmtKc(0); return; }
   let total=0;
   box.innerHTML=[...cart.entries()].map(([k,it])=>{
-    const p=it.rec; total+=gPrice(p,SC)*it.qty;
-    const id=[gCode(p,SC)&&"č. "+gCode(p,SC), gOzn(p,SC), gEan(p)&&"EAN "+gEan(p), gUnit(p,SC)].filter(Boolean).join(" · ");
-    return `<div class="citem"><div style="flex:1">
-      <div class="n">${esc(gName(p,SC))}</div>
-      <div class="m">${esc(id)}</div>
-      <div class="qtybox" style="margin-top:6px"><button data-cdec="${k}">−</button><input class="num" data-cqty="${k}" value="${it.qty}" inputmode="numeric"><button data-cinc="${k}">+</button></div>
-    </div><button class="rm" data-crm="${k}">Odebrat</button></div>`;
+    total+=itPrice(it)*it.qty;
+    const badge=it.custom?`<div class="badge-calc">z kalkulačky SDK</div>`:"";
+    const cimg=itImg(it); const cthumb=cimg?`<img class="citem-thumb" src="${esc(cimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:"";
+    return `<div class="citem">${cthumb}<div style="flex:1">
+      <div class="n">${esc(itName(it))}</div>
+      <div class="m">${esc(itIdLine(it))}</div>
+      ${badge}
+      <div class="qtybox" style="margin-top:6px"><button data-cdec="${esc(k)}">−</button><input class="num" data-cqty="${esc(k)}" value="${it.qty}" inputmode="numeric"><button data-cinc="${esc(k)}">+</button></div>
+    </div><button class="rm" data-crm="${esc(k)}">Odebrat</button></div>`;
   }).join("");
   $("#cartTotal").textContent=fmtKc(total);
 }
 function buildText(){
   const L=["POPTÁVKA","Datum: "+new Date().toLocaleString("cs-CZ"),""]; let total=0;
-  [...cart.values()].forEach((it,i)=>{ const p=it.rec; total+=gPrice(p,SC)*it.qty;
-    const id=[gCode(p,SC)&&"č. "+gCode(p,SC), gOzn(p,SC), gEan(p)&&"EAN "+gEan(p)].filter(Boolean).join(" · ");
-    L.push(`${i+1}. ${gName(p,SC)}`); L.push(`   ${id} · množství: ${it.qty} ${gUnit(p,SC)}`); });
+  [...cart.values()].forEach((it,i)=>{ total+=itPrice(it)*it.qty;
+    const id=[itCode(it)&&"č. "+itCode(it), itOzn(it), itEan(it)&&"EAN "+itEan(it)].filter(Boolean).join(" · ");
+    L.push(`${i+1}. ${itName(it)}`); L.push(`   ${id?id+" · ":""}množství: ${it.qty} ${itUnit(it)}`); });
   L.push(""); L.push("Celkem orientačně s DPH: "+fmtKc(total)); L.push("(Ceny jsou pouze orientační a budou co nejdříve potvrzeny.)"); L.push("");
   L.push("Kontakt:");
   L.push("  Jméno: "+($("#fName").value||"—")); L.push("  Firma: "+($("#fCompany").value||"—"));
@@ -459,7 +677,7 @@ function buildText(){
 }
 function payload(){ return { datum:new Date().toISOString(),
   kontakt:{jmeno:$("#fName").value,firma:$("#fCompany").value,email:$("#fEmail").value,telefon:$("#fPhone").value,poznamka:$("#fNote").value},
-  polozky:[...cart.values()].map(it=>({cislo:gCode(it.rec,SC),oznaceni:gOzn(it.rec,SC),nazev:gName(it.rec,SC),ean:gEan(it.rec),mj:gUnit(it.rec,SC),cena_sdph:gPrice(it.rec,SC),mnozstvi:it.qty})) }; }
+  polozky:[...cart.values()].map(it=>({cislo:itCode(it),oznaceni:itOzn(it),nazev:itName(it),ean:itEan(it),mj:itUnit(it),cena_sdph:itPrice(it),mnozstvi:it.qty,zdroj:it.custom?"kalkulacka":"katalog"})) }; }
 async function sendPoptavka(){
   if(!cart.size){ setStat("#sendStat","Košík je prázdný.","err"); return; }
   if(ODESLAT_ENDPOINT){ setStat("#sendStat","Odesílám…");
@@ -472,6 +690,113 @@ async function sendPoptavka(){
   setStat("#sendStat","Otevřel se e-mailový klient s předvyplněnou poptávkou.","ok");
 }
 function saveDraft(){ try{ store.set("draft",JSON.stringify([...cart.entries()].map(([k,it])=>({k,qty:it.qty})))); }catch(e){} }
+
+/* ===== KALKULAČKA SDK PŘÍČKY ===== */
+function calcSegVal(id){ const a=document.querySelector("#"+id+" button.active"); return a?parseFloat(a.dataset.val):0; }
+document.addEventListener("click",e=>{ // segmentované přepínače v kalkulačce
+  const b=e.target.closest(".segc button"); if(!b) return;
+  const seg=b.parentElement; seg.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); calcRender();
+});
+const cOtvEl=()=>$("#cOtvory");
+function calcAddOpening(typ,s,v,ks,zes){
+  const row=document.createElement("div"); row.className="otv";
+  row.innerHTML=
+    '<select class="o-typ"><option'+(typ==="Dveře"?" selected":"")+'>Dveře</option><option'+(typ==="Okno"?" selected":"")+'>Okno</option></select>'+
+    '<input class="o-s" type="number" min="0" step="10" value="'+s+'">'+
+    '<input class="o-v" type="number" min="0" step="10" value="'+v+'">'+
+    '<input class="o-ks" type="number" min="1" step="1" value="'+ks+'">'+
+    '<label class="o-zes"><input type="checkbox" class="o-zeschk"'+(zes?" checked":"")+'> zesílení</label>'+
+    '<button class="o-del" title="Odebrat">×</button>';
+  cOtvEl().appendChild(row);
+  row.querySelectorAll("input,select").forEach(el=>{ el.addEventListener("input",calcRender); el.addEventListener("change",calcRender); });
+  row.querySelector(".o-del").addEventListener("click",()=>{ row.remove(); calcRender(); });
+}
+function calcReadOpenings(){
+  const list=[];
+  cOtvEl().querySelectorAll(".otv").forEach(r=>{
+    list.push({
+      typ:r.querySelector(".o-typ").value,
+      s:parseFloat(r.querySelector(".o-s").value)||0,
+      v:parseFloat(r.querySelector(".o-v").value)||0,
+      ks:parseFloat(r.querySelector(".o-ks").value)||0,
+      zes:r.querySelector(".o-zeschk").checked
+    });
+  });
+  return list;
+}
+function calcCompute(){
+  const delka=parseFloat($("#cDelka").value)||0, vyska=parseFloat($("#cVyska").value)||0;
+  const strany=calcSegVal("cStrany")||2, vrstvy=calcSegVal("cVrstvy")||1;
+  const deska=parseFloat($("#cDeska").value)||3.25;
+  const cwtyp=$("#cCw").value, roztec=parseFloat($("#cRoztec").value)||0.625;
+  const prorez=(parseFloat($("#cProrez").value)||0)/100;
+  const ops=calcReadOpenings();
+
+  let otvoryArea=0, framing=0;
+  ops.forEach(o=>{
+    const sm=o.s/1000, vm=o.v/1000;
+    otvoryArea += sm*vm*o.ks;
+    if(o.zes){ framing += (o.typ==="Okno" ? 2*(sm+vm) : (2*vm+sm)) * o.ks; } // okno = obvod, dveře = 2× stojka + překlad
+  });
+
+  const A=Math.max(delka*vyska-otvoryArea,0);
+  const oplast=A*strany*vrstvy, pohled=A*strany;
+  const desky=deska>0?Math.ceil(oplast*(1+prorez)/deska):0;
+  const cwPocet=(delka>0&&roztec>0)?Math.ceil(delka/roztec)+1:0;
+  const uwBm=delka*2, uwks=Math.ceil(uwBm/4);
+  const obvod=2*(delka+vyska);
+  const srouby=Math.ceil(oplast*25);
+  const izolace=Math.ceil(A);
+  const tmel=Math.ceil(pohled*0.45);
+  const paska=Math.ceil(pohled*1.2);
+  const framingKs=Math.ceil(framing/4);
+
+  const dt=$("#cDeska").selectedOptions[0].textContent.split(" (")[0];
+  const mat=[
+    {grp:"Opláštění"},
+    {name:"SDK deska "+dt, unit:"ks", qty:desky, tokens:["sádrokart"]},
+    {name:"Šrouby TN (rychlošrouby)", unit:"ks", qty:srouby, tokens:["šroub"]},
+    {name:"Spárovací tmel", unit:"kg", qty:tmel, tokens:["tmel"]},
+    {name:"Spárovací (výztužná) páska", unit:"bm", qty:paska, tokens:["páska"]},
+    {grp:"Nosná konstrukce"},
+    {name:"Profil CW "+cwtyp+" (dl. "+fmtNum(vyska)+" m)", unit:"ks", qty:cwPocet, tokens:["cw",cwtyp]},
+    {name:"Profil UW "+cwtyp, unit:"ks / 4 m", qty:uwks, tokens:["uw",cwtyp]},
+    {name:"Těsnicí (napojovací) páska", unit:"bm", qty:Math.ceil(obvod), tokens:["těsn"]},
+    {grp:"Výplň"},
+    {name:"Izolace (minerální vata)", unit:"m²", qty:izolace, tokens:["izolace"]}
+  ];
+  if(framingKs>0) mat.push({grp:"Zesílení otvorů"},{name:"Profil na ostění otvorů (UA/CW "+cwtyp+")", unit:"ks / 4 m", qty:framingKs, tokens:["ua",cwtyp]});
+
+  return {delka,vyska,strany,vrstvy,dt,cwtyp,A,oplast,desky,otvoryArea,mat};
+}
+function calcRender(){
+  if(!$("#calcModal").classList.contains("show")) return;
+  const r=calcCompute();
+  $("#cOtvSum").textContent=fmtNum(r.otvoryArea)+" m²";
+  $("#cResDesky").textContent=r.desky>0?r.desky.toLocaleString("cs-CZ"):"–";
+  $("#cResDeskaTyp").textContent=r.dt+" · opláštěná plocha "+fmtNum(r.oplast)+" m²";
+  $("#cBom").innerHTML=r.mat.map(m=>{
+    if(m.grp) return `<tr class="grp"><td colspan="3">${esc(m.grp)}</td></tr>`;
+    return `<tr><td>${esc(m.name)}</td><td class="q">${m.qty.toLocaleString("cs-CZ")}</td><td class="u">${esc(m.unit)}</td></tr>`;
+  }).join("");
+}
+function calcAddAll(){
+  const r=calcCompute();
+  const items=r.mat.filter(m=>!m.grp && m.qty>0);
+  if(!items.length){ setStat("#cStat","Není co přidat — zkontroluj rozměry.","err"); return; }
+  let matched=0, custom=0;
+  items.forEach(m=>{
+    const p=findProduct(m.tokens);
+    if(p){ addToCart(products.indexOf(p), Math.round(m.qty)); matched++; }
+    else { addCustomToCart({name:m.name, unit:m.unit, qty:Math.round(m.qty)}); custom++; }
+  });
+  // poznámka do poptávky
+  const note="SDK příčka (odhad): "+fmtNum(r.delka)+" × "+fmtNum(r.vyska)+" m, "+(r.strany===2?"oboustranné":"jednostranné")+" opláštění, "+r.vrstvy+"× vrstva.";
+  const nf=$("#fNote"); nf.value = nf.value ? (nf.value.replace(/\s*$/,"")+"\n"+note) : note;
+  setStat("#cStat","Přidáno "+items.length+" položek do poptávky ("+matched+" spárováno s katalogem, "+custom+" jako vlastní odhad).","ok");
+  toast("Materiál přidán do poptávky");
+  renderCart();
+}
 
 /* ===== SKENER ===== */
 let stream=null,detector=null,scanning=false;
@@ -507,6 +832,8 @@ function openCart(){ $("#cart").classList.add("open"); $("#backdrop").classList.
 function closeCart(){ $("#cart").classList.remove("open"); $("#backdrop").classList.remove("show"); }
 function openCfg(){ $("#cfgModal").classList.add("show"); }
 function closeCfg(){ $("#cfgModal").classList.remove("show"); }
+function openCalc(){ $("#calcModal").classList.add("show"); if(!cOtvEl().children.length) calcAddOpening("Dveře",800,1970,1,false); calcRender(); }
+function closeCalc(){ $("#calcModal").classList.remove("show"); }
 
 $("#rows").addEventListener("click",e=>{ const t=e.target;
   if(t.dataset.add!=null){ const i=+t.dataset.add; addToCart(i,$(`input[data-qty="${i}"]`).value); toast("Přidáno do poptávky"); }
@@ -518,6 +845,12 @@ $("#cartItems").addEventListener("click",e=>{ const t=e.target;
   else if(t.dataset.cdec!=null){ const it=cart.get(t.dataset.cdec); if(it) setCartQty(t.dataset.cdec,it.qty-1); } });
 $("#cartItems").addEventListener("change",e=>{ if(e.target.dataset.cqty!=null) setCartQty(e.target.dataset.cqty,e.target.value); });
 ["#q","#onlyStock"].forEach(s=>$(s).addEventListener("input",render));
+
+$("#btnCalc").onclick=openCalc; $("#calcClose").onclick=closeCalc; $("#cClose2").onclick=closeCalc;
+$("#cOtvAdd").onclick=()=>{ calcAddOpening("Okno",1500,1500,1,false); calcRender(); };
+$("#cAddCart").onclick=calcAddAll;
+$("#cHelpBtn").onclick=()=>$("#cHelpBox").classList.toggle("open");
+["#cDelka","#cVyska","#cDeska","#cCw","#cRoztec","#cProrez"].forEach(s=>{ $(s).addEventListener("input",calcRender); $(s).addEventListener("change",calcRender); });
 
 $("#btnCfg").onclick=openCfg; $("#cfgClose").onclick=closeCfg;
 $("#load1url").onclick=()=>loadFeed1FromUrl($("#url1").value.trim());
@@ -550,7 +883,9 @@ $("#luser").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#lpass").focu
 $("#btnLogout").onclick=logout;
 
 (function init(){
-  $("#url1").value=store.get("feed_url")||DEFAULT_FEED1_URL;
+  let savedFeed=store.get("feed_url");
+  if(!savedFeed || OLD_DEFAULT_FEEDS.includes(savedFeed)) savedFeed=DEFAULT_FEED1_URL;
+  $("#url1").value=savedFeed;
   renderCart();
   if(LOGIN_ENABLED && store.get("auth")!=="1"){
     $("#login").style.display="flex"; $("#btnLogout").style.display=""; $("#luser").focus();
