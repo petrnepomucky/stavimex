@@ -325,12 +325,14 @@
 
       <div class="feedgrid" style="gap:10px;margin-top:10px">
         <div>
-          <label class="lbl-f">Rozměr SDK desky</label>
+          <label class="lbl-f">Druh SDK desky (z katalogu)</label>
           <select class="txt" id="cDeska">
-            <option value="2.5">1250 × 2000 mm (2,50 m²)</option>
-            <option value="3.125">1250 × 2500 mm (3,13 m²)</option>
-            <option value="3.25" selected>1250 × 2600 mm (3,25 m²)</option>
-            <option value="3.75">1250 × 3000 mm (3,75 m²)</option>
+            <option value="0" data-code="21600051" data-area="2.5" selected>Sádrokarton 12,5 bílý – standardní (RB)</option>
+            <option value="1" data-code="21600070" data-area="2.5">Sádrokarton 12,5 červený – protipožární (RF)</option>
+            <option value="2" data-code="21600060" data-area="2.5">Sádrokarton 12,5 zelený – impregnovaný (RBI)</option>
+            <option value="3" data-code="21600079" data-area="2.5">Sádrokarton 12,5 modrý – akustický (DB)</option>
+            <option value="4" data-code="21600072" data-area="2.5">Sádrokarton 12,5 červeno-zelený (RFI)</option>
+            <option value="5" data-code="21600080" data-area="2.5">Sádrokarton 12,5 Diamant – tvrzený</option>
           </select>
         </div>
         <div>
@@ -574,7 +576,7 @@ function ingestFeed1(xml){
   products=list; SC=detectSchema(list);
   const stockLbls=SC.stocks.map(t=>stockLabel(t,SC.stocks)).join(", ")||"žádné";
   setStat("#stat1","Načteno "+list.length+" položek. Rozpoznané sklady: "+stockLbls+". Pole ve feedu: "+SC.tags.join(", "),"ok");
-  render();
+  render(); populateBoards();
 }
 
 /* ===== RENDER KATALOGU ===== */
@@ -724,50 +726,85 @@ function calcReadOpenings(){
   });
   return list;
 }
+/* mapování materiálů SDK příčky na reálné produkty z feedu (kódy CISLO ze Stavimex feedu) */
+const SDK_CAT = {
+  cw:   { "50":{"3":"21620501","4":"21620507"}, "75":{"3":"21620751","4":"21620750"}, "100":{"3":"21621001","4":"21620503"} },
+  uw:   { "50":"21620502", "75":"21620752", "100":"21621002" },
+  tesn: { "50":"21630217", "75":"21630216", "100":"21630215" },
+  ua:   { "50":"21621003", "75":"21621004", "100":"21621005" },
+  srouby:{ code:"21600120", pack:200 },
+  tmel:  { code:"21630030", pack:5 },
+  paska: { code:"32010090", pack:23 },
+  izol:  { "50":{code:"20300053",pack:12.5,tl:"50 mm"}, "75":{code:"20300055",pack:7.81,tl:"80 mm"}, "100":{code:"20300056",pack:6.25,tl:"100 mm"} }
+};
+function findByCode(code){ if(!code||!products.length) return null; return products.find(p=>String(gCode(p,SC)).trim()===String(code).trim())||null; }
+function boardArea(rozmer){ const m=String(rozmer||"").toLowerCase().replace(",",".").match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/); return m?(parseFloat(m[1])*parseFloat(m[2])):2.5; }
+function boardDesc(name){ const u=String(name).toUpperCase();
+  if(/C\+ZE|C\+Z/.test(u)) return "protipožární + impregnovaná (RFI)";
+  if(/CERV/.test(u)) return "protipožární (RF)";
+  if(/ZELE/.test(u)) return "impregnovaná do vlhka (RBI)";
+  if(/BLUE/.test(u)) return "akustická (DB)";
+  if(/DIAM/.test(u)) return "tvrzená Diamant";
+  if(/BILY|BÍL/.test(u)) return "standardní (RB)";
+  return ""; }
+function populateBoards(){
+  if(!products.length) return;
+  const list=products.filter(p=>/^sadrokarton\s*\d/i.test(gName(p,SC)) && /^ks$/i.test(gUnit(p,SC)));
+  if(!list.length) return;
+  const sel=$("#cDeska"); const prev=sel.selectedOptions[0]?sel.selectedOptions[0].dataset.code:"";
+  sel.innerHTML=list.map((p,i)=>{
+    const nm=gName(p,SC), d=boardDesc(nm), area=boardArea(p.ROZMER);
+    const label=nm.replace(/^SADROKARTON/i,"Sádrokarton")+(d?" – "+d:"");
+    return `<option value="${i}" data-code="${esc(String(gCode(p,SC)).trim())}" data-area="${area}">${esc(label)}</option>`;
+  }).join("");
+  if(prev){ const o=[...sel.options].find(x=>x.dataset.code===prev); if(o) o.selected=true; }
+}
+
 function calcCompute(){
   const delka=parseFloat($("#cDelka").value)||0, vyska=parseFloat($("#cVyska").value)||0;
   const strany=calcSegVal("cStrany")||2, vrstvy=calcSegVal("cVrstvy")||1;
-  const deska=parseFloat($("#cDeska").value)||3.25;
+  const opt=$("#cDeska").selectedOptions[0]||{dataset:{},textContent:"SDK deska"};
+  const deska=parseFloat(opt.dataset.area)||2.5;
+  const deskaCode=opt.dataset.code||"";
+  const deskaName=(opt.textContent||"SDK deska").trim();
   const cwtyp=$("#cCw").value, roztec=parseFloat($("#cRoztec").value)||0.625;
   const prorez=(parseFloat($("#cProrez").value)||0)/100;
   const ops=calcReadOpenings();
 
   let otvoryArea=0, framing=0;
-  ops.forEach(o=>{
-    const sm=o.s/1000, vm=o.v/1000;
-    otvoryArea += sm*vm*o.ks;
-    if(o.zes){ framing += (o.typ==="Okno" ? 2*(sm+vm) : (2*vm+sm)) * o.ks; } // okno = obvod, dveře = 2× stojka + překlad
-  });
+  ops.forEach(o=>{ const sm=o.s/1000, vm=o.v/1000; otvoryArea+=sm*vm*o.ks;
+    if(o.zes) framing += (o.typ==="Okno"?2*(sm+vm):(2*vm+sm))*o.ks; });
 
   const A=Math.max(delka*vyska-otvoryArea,0);
   const oplast=A*strany*vrstvy, pohled=A*strany;
+  const ceilDiv=(a,b)=>b>0?Math.ceil(a/b):0;
   const desky=deska>0?Math.ceil(oplast*(1+prorez)/deska):0;
   const cwPocet=(delka>0&&roztec>0)?Math.ceil(delka/roztec)+1:0;
-  const uwBm=delka*2, uwks=Math.ceil(uwBm/4);
-  const obvod=2*(delka+vyska);
-  const srouby=Math.ceil(oplast*25);
-  const izolace=Math.ceil(A);
-  const tmel=Math.ceil(pohled*0.45);
-  const paska=Math.ceil(pohled*1.2);
-  const framingKs=Math.ceil(framing/4);
+  const lenKey=vyska>3?"4":"3";
+  const uwBm=delka*2, obvod=2*(delka+vyska);
+  const sroubyKs=Math.ceil(oplast*25);
+  const tmelKg=Math.ceil(pohled*0.45);
+  const paskaBm=Math.ceil(pohled*1.2);
+  const izo=SDK_CAT.izol[cwtyp]||SDK_CAT.izol["75"];
 
-  const dt=$("#cDeska").selectedOptions[0].textContent.split(" (")[0];
   const mat=[
     {grp:"Opláštění"},
-    {name:"SDK deska "+dt, unit:"ks", qty:desky, tokens:["sádrokart"]},
-    {name:"Šrouby TN (rychlošrouby)", unit:"ks", qty:srouby, tokens:["šroub"]},
-    {name:"Spárovací tmel", unit:"kg", qty:tmel, tokens:["tmel"]},
-    {name:"Spárovací (výztužná) páska", unit:"bm", qty:paska, tokens:["páska"]},
+    {name:deskaName, code:deskaCode, qty:desky, unit:"ks", tokens:["sadrokart"]},
+    {name:"Šrouby SDK TN 25", code:SDK_CAT.srouby.code, qty:ceilDiv(sroubyKs,SDK_CAT.srouby.pack), unit:"bal.", note:"á 200 ks · potřeba ~"+sroubyKs.toLocaleString("cs-CZ")+" ks", tokens:["sroub","tn"]},
+    {name:"Spárovací tmel Fugenfüller Leicht", code:SDK_CAT.tmel.code, qty:ceilDiv(tmelKg,SDK_CAT.tmel.pack), unit:"bal.", note:"á 5 kg · potřeba ~"+tmelKg+" kg", tokens:["fugen"]},
+    {name:"Výztužná spárovací páska", code:SDK_CAT.paska.code, qty:ceilDiv(paskaBm,SDK_CAT.paska.pack), unit:"role", note:"á 23 bm · potřeba ~"+paskaBm+" bm", tokens:["vyztuz","pask"]},
     {grp:"Nosná konstrukce"},
-    {name:"Profil CW "+cwtyp+" (dl. "+fmtNum(vyska)+" m)", unit:"ks", qty:cwPocet, tokens:["cw",cwtyp]},
-    {name:"Profil UW "+cwtyp, unit:"ks / 4 m", qty:uwks, tokens:["uw",cwtyp]},
-    {name:"Těsnicí (napojovací) páska", unit:"bm", qty:Math.ceil(obvod), tokens:["těsn"]},
+    {name:"Profil CW "+cwtyp+" ("+lenKey+" m)", code:(SDK_CAT.cw[cwtyp]||{})[lenKey], qty:cwPocet, unit:"ks", note:"stojky, dl. "+fmtNum(vyska)+" m", tokens:["cw",cwtyp]},
+    {name:"Profil UW "+cwtyp+" (4 m)", code:SDK_CAT.uw[cwtyp], qty:ceilDiv(uwBm,4), unit:"ks", note:"obvod · potřeba ~"+fmtNum(uwBm)+" bm", tokens:["uw",cwtyp]},
+    {name:"Těsnicí páska pod profil CW "+cwtyp, code:SDK_CAT.tesn[cwtyp], qty:ceilDiv(obvod,30), unit:"role", note:"á 30 bm · obvod ~"+fmtNum(obvod)+" bm", tokens:["akust","pask",cwtyp]},
     {grp:"Výplň"},
-    {name:"Izolace (minerální vata)", unit:"m²", qty:izolace, tokens:["izolace"]}
+    {name:"Minerální izolace IS-AKUSTIC "+izo.tl, code:izo.code, qty:ceilDiv(A,izo.pack), unit:"bal.", note:"á "+fmtNum(izo.pack)+" m² · plocha "+fmtNum(A)+" m²", tokens:["akustic"]}
   ];
-  if(framingKs>0) mat.push({grp:"Zesílení otvorů"},{name:"Profil na ostění otvorů (UA/CW "+cwtyp+")", unit:"ks / 4 m", qty:framingKs, tokens:["ua",cwtyp]});
-
-  return {delka,vyska,strany,vrstvy,dt,cwtyp,A,oplast,desky,otvoryArea,mat};
+  if(framing>0){
+    mat.push({grp:"Zesílení otvorů"},
+      {name:"Profil UA "+cwtyp+" na ostění (3 m)", code:SDK_CAT.ua[cwtyp], qty:ceilDiv(framing,3), unit:"ks", note:"potřeba ~"+fmtNum(framing)+" bm", tokens:["ua",cwtyp]});
+  }
+  return {delka,vyska,strany,vrstvy,dt:deskaName,cwtyp,A,oplast,desky,otvoryArea,mat};
 }
 function calcRender(){
   if(!$("#calcModal").classList.contains("show")) return;
@@ -777,7 +814,8 @@ function calcRender(){
   $("#cResDeskaTyp").textContent=r.dt+" · opláštěná plocha "+fmtNum(r.oplast)+" m²";
   $("#cBom").innerHTML=r.mat.map(m=>{
     if(m.grp) return `<tr class="grp"><td colspan="3">${esc(m.grp)}</td></tr>`;
-    return `<tr><td>${esc(m.name)}</td><td class="q">${m.qty.toLocaleString("cs-CZ")}</td><td class="u">${esc(m.unit)}</td></tr>`;
+    const nameCell=esc(m.name)+(m.note?`<div style="color:var(--muted);font-size:11.5px">${esc(m.note)}</div>`:"");
+    return `<tr><td>${nameCell}</td><td class="q">${(m.qty||0).toLocaleString("cs-CZ")}</td><td class="u">${esc(m.unit)}</td></tr>`;
   }).join("");
 }
 function calcAddAll(){
@@ -786,12 +824,11 @@ function calcAddAll(){
   if(!items.length){ setStat("#cStat","Není co přidat — zkontroluj rozměry.","err"); return; }
   let matched=0, custom=0;
   items.forEach(m=>{
-    const p=findProduct(m.tokens);
+    let p=findByCode(m.code); if(!p) p=findProduct(m.tokens);
     if(p){ addToCart(products.indexOf(p), Math.round(m.qty)); matched++; }
     else { addCustomToCart({name:m.name, unit:m.unit, qty:Math.round(m.qty)}); custom++; }
   });
-  // poznámka do poptávky
-  const note="SDK příčka (odhad): "+fmtNum(r.delka)+" × "+fmtNum(r.vyska)+" m, "+(r.strany===2?"oboustranné":"jednostranné")+" opláštění, "+r.vrstvy+"× vrstva.";
+  const note="SDK příčka (odhad): "+fmtNum(r.delka)+" × "+fmtNum(r.vyska)+" m, "+(r.strany===2?"oboustranné":"jednostranné")+" opláštění, "+r.vrstvy+"× vrstva, "+r.dt+".";
   const nf=$("#fNote"); nf.value = nf.value ? (nf.value.replace(/\s*$/,"")+"\n"+note) : note;
   setStat("#cStat","Přidáno "+items.length+" položek do poptávky ("+matched+" spárováno s katalogem, "+custom+" jako vlastní odhad).","ok");
   toast("Materiál přidán do poptávky");
@@ -832,7 +869,7 @@ function openCart(){ $("#cart").classList.add("open"); $("#backdrop").classList.
 function closeCart(){ $("#cart").classList.remove("open"); $("#backdrop").classList.remove("show"); }
 function openCfg(){ $("#cfgModal").classList.add("show"); }
 function closeCfg(){ $("#cfgModal").classList.remove("show"); }
-function openCalc(){ $("#calcModal").classList.add("show"); if(!cOtvEl().children.length) calcAddOpening("Dveře",800,1970,1,false); calcRender(); }
+function openCalc(){ $("#calcModal").classList.add("show"); populateBoards(); if(!cOtvEl().children.length) calcAddOpening("Dveře",800,1970,1,false); calcRender(); }
 function closeCalc(){ $("#calcModal").classList.remove("show"); }
 
 $("#rows").addEventListener("click",e=>{ const t=e.target;
