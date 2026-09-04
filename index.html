@@ -343,6 +343,18 @@
 
       <div class="feedgrid" style="gap:10px;margin-top:10px">
         <div>
+          <label class="lbl-f">Šrouby SDK (délka)</label>
+          <select class="txt" id="cSroub">
+            <option value="TN25" selected>TN 25 – 1 vrstva 12,5 mm</option>
+            <option value="TN35">TN 35 – 2 vrstvy</option>
+            <option value="TN45">TN 45 – silnější skladba</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="feedgrid" style="gap:10px;margin-top:10px">
+        <div>
           <div style="display:flex;align-items:center;gap:8px">
             <label class="lbl-f" style="margin:0">Osová vzdálenost (mm)</label>
             <button class="help-btn" id="cHelpBtn" title="Co to je?">?</button>
@@ -697,7 +709,9 @@ function saveDraft(){ try{ store.set("draft",JSON.stringify([...cart.entries()].
 function calcSegVal(id){ const a=document.querySelector("#"+id+" button.active"); return a?parseFloat(a.dataset.val):0; }
 document.addEventListener("click",e=>{ // segmentované přepínače v kalkulačce
   const b=e.target.closest(".segc button"); if(!b) return;
-  const seg=b.parentElement; seg.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); calcRender();
+  const seg=b.parentElement; seg.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+  if(seg.id==="cVrstvy"){ const ss=$("#cSroub"); if(ss) ss.value=(b.dataset.val==="2"?"TN35":"TN25"); }
+  calcRender();
 });
 const cOtvEl=()=>$("#cOtvory");
 function calcAddOpening(typ,s,v,ks,zes){
@@ -732,12 +746,13 @@ const SDK_CAT = {
   uw:   { "50":"21620502", "75":"21620752", "100":"21621002" },
   tesn: { "50":"21630217", "75":"21630216", "100":"21630215" },
   ua:   { "50":"21621003", "75":"21621004", "100":"21621005" },
-  srouby:{ code:"21600120", pack:200 },
+  srouby:{ "TN25":{code:"21600120",pack:200}, "TN35":{code:"21600121",pack:200}, "TN45":{code:"21600122",pack:200} },
   tmel:  { code:"21630030", pack:5 },
   paska: { code:"32010090", pack:23 },
   izol:  { "50":{code:"20300053",pack:12.5,tl:"50 mm"}, "75":{code:"20300055",pack:7.81,tl:"80 mm"}, "100":{code:"20300056",pack:6.25,tl:"100 mm"} }
 };
 function findByCode(code){ if(!code||!products.length) return null; return products.find(p=>String(gCode(p,SC)).trim()===String(code).trim())||null; }
+function packFromName(name, fallback){ const s=String(name||""); let m=s.match(/(\d+)\s*KS/i); if(m) return parseInt(m[1]); m=s.match(/BAL[.\/ ]*(\d+)/i); if(m) return parseInt(m[1]); return fallback||1; }
 function boardArea(rozmer){ const m=String(rozmer||"").toLowerCase().replace(",",".").match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/); return m?(parseFloat(m[1])*parseFloat(m[2])):2.5; }
 function boardDesc(name){ const u=String(name).toUpperCase();
   if(/C\+ZE|C\+Z/.test(u)) return "protipožární + impregnovaná (RFI)";
@@ -786,11 +801,15 @@ function calcCompute(){
   const tmelKg=Math.ceil(pohled*0.45);
   const paskaBm=Math.ceil(pohled*1.2);
   const izo=SDK_CAT.izol[cwtyp]||SDK_CAT.izol["75"];
+  const sroubSel=($("#cSroub")&&$("#cSroub").value)||"TN25";
+  const sc=SDK_CAT.srouby[sroubSel]||SDK_CAT.srouby.TN25;
+  const scProd=findByCode(sc.code);
+  const scPack=packFromName(scProd?gName(scProd,SC):"", sc.pack);
 
   const mat=[
     {grp:"Opláštění"},
     {name:deskaName, code:deskaCode, qty:desky, unit:"ks", tokens:["sadrokart"]},
-    {name:"Šrouby SDK TN 25", code:SDK_CAT.srouby.code, qty:ceilDiv(sroubyKs,SDK_CAT.srouby.pack), unit:"bal.", note:"á 200 ks · potřeba ~"+sroubyKs.toLocaleString("cs-CZ")+" ks", tokens:["sroub","tn"]},
+    {name:"Šrouby SDK "+sroubSel, code:sc.code, qty:ceilDiv(sroubyKs,scPack), unit:"bal.", note:"á "+scPack+" ks · potřeba ~"+sroubyKs.toLocaleString("cs-CZ")+" ks", tokens:["sroub",sroubSel.toLowerCase()]},
     {name:"Spárovací tmel Fugenfüller Leicht", code:SDK_CAT.tmel.code, qty:ceilDiv(tmelKg,SDK_CAT.tmel.pack), unit:"bal.", note:"á 5 kg · potřeba ~"+tmelKg+" kg", tokens:["fugen"]},
     {name:"Výztužná spárovací páska", code:SDK_CAT.paska.code, qty:ceilDiv(paskaBm,SDK_CAT.paska.pack), unit:"role", note:"á 23 bm · potřeba ~"+paskaBm+" bm", tokens:["vyztuz","pask"]},
     {grp:"Nosná konstrukce"},
@@ -887,7 +906,7 @@ $("#btnCalc").onclick=openCalc; $("#calcClose").onclick=closeCalc; $("#cClose2")
 $("#cOtvAdd").onclick=()=>{ calcAddOpening("Okno",1500,1500,1,false); calcRender(); };
 $("#cAddCart").onclick=calcAddAll;
 $("#cHelpBtn").onclick=()=>$("#cHelpBox").classList.toggle("open");
-["#cDelka","#cVyska","#cDeska","#cCw","#cRoztec","#cProrez"].forEach(s=>{ $(s).addEventListener("input",calcRender); $(s).addEventListener("change",calcRender); });
+["#cDelka","#cVyska","#cDeska","#cCw","#cSroub","#cRoztec","#cProrez"].forEach(s=>{ $(s).addEventListener("input",calcRender); $(s).addEventListener("change",calcRender); });
 
 $("#btnCfg").onclick=openCfg; $("#cfgClose").onclick=closeCfg;
 $("#load1url").onclick=()=>loadFeed1FromUrl($("#url1").value.trim());
