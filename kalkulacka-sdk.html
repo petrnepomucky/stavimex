@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -200,9 +201,31 @@
   "use strict";
   /* ==== KONFIGURACE ==== */
   var POPTAVKA_EMAIL = "poptavka@stavimex.cz";   // kam pošle "Poslat poptávku"
+  // Povolené domény (včetně subdomén – "stavimex.cz" pustí i www.stavimex.cz).
+  var POVOLENE_DOMENY = ["stavimex.cz", "localhost", "127.0.0.1"];
 
   var root = document.getElementById("sdk");
   function $(s){ return root.querySelector(s); }
+
+  /* ==== ZÁMEK NA DOMÉNU ==== */
+  (function(){
+    var h = String(location.hostname || "").toLowerCase().replace(/\.$/, "");
+    var jeSoubor = location.protocol === "file:";          // lokální otevření souboru
+    var povoleno = jeSoubor || POVOLENE_DOMENY.some(function(d){
+      d = d.toLowerCase();
+      return h === d || h.slice(-(d.length + 1)) === "." + d;
+    });
+    if (povoleno) return;
+    root.innerHTML =
+      '<div style="padding:26px 20px;border:1px solid #e2e5e9;border-radius:12px;text-align:center;' +
+      'font-family:Arial,Helvetica,sans-serif;color:#1a1d21;background:#fff">' +
+      '<div style="width:14px;height:14px;background:#e02125;border-radius:2px;margin:0 auto 12px"></div>' +
+      '<b style="display:block;font-size:16px;margin-bottom:6px">Kalkulačka SDK příčky</b>' +
+      '<span style="color:#6b7078;font-size:14px">Tento nástroj je dostupný pouze na webu STAVIMEX.</span><br>' +
+      '<a href="https://www.stavimex.cz/" style="display:inline-block;margin-top:12px;color:#064386;font-weight:700">' +
+      'Přejít na www.stavimex.cz</a></div>';
+    throw new Error("Kalkulacka SDK: nepovolena domena");
+  })();
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
   function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString("cs-CZ"); }
 
@@ -258,7 +281,8 @@
     var deska=parseFloat(opt.dataset.area)||2.5;
     var deskaName=(opt.textContent||"SDK deska").trim();
     var cwtyp=$("#cCw").value, roztec=parseFloat($("#cRoztec").value)||0.625;
-    var prorez=(parseFloat($("#cProrez").value)||0)/100;
+    var prorezPct=parseFloat($("#cProrez").value)||0;
+    var prorez=prorezPct/100;
     var ops=readOpenings();
 
     var otvoryArea=0, framing=0;
@@ -296,7 +320,8 @@
       mat.push({grp:"Zesílení otvorů"},
         {name:"Profil UA "+cwtyp+" na ostění (3 m)", qty:ceilDiv(framing,3), unit:"ks", note:"potřeba ~"+fmtNum(framing)+" bm"});
     }
-    return {delka:delka,vyska:vyska,strany:strany,vrstvy:vrstvy,dt:deskaName,cwtyp:cwtyp,A:A,oplast:oplast,desky:desky,otvoryArea:otvoryArea,mat:mat};
+    return {delka:delka,vyska:vyska,strany:strany,vrstvy:vrstvy,dt:deskaName,cwtyp:cwtyp,roztec:roztec,prorezPct:prorezPct,
+            ops:ops,A:A,oplast:oplast,desky:desky,otvoryArea:otvoryArea,mat:mat};
   }
 
   function render(){
@@ -324,6 +349,74 @@
     return L.join("\n");
   }
 
+  /* ==== TISK – samostatný list: jen popis stěny + materiál ==== */
+  function buildPrintHtml(){
+    var r=compute();
+    var datum=new Date().toLocaleDateString("cs-CZ");
+    var otv=r.ops.length ? r.ops.map(function(o){
+        return esc(o.typ)+" "+fmtNum(o.s)+" × "+fmtNum(o.v)+" mm, "+fmtNum(o.ks)+" ks"+(o.zes?" (se zesílením)":"");
+      }).join("<br>") : "bez otvorů";
+    var popis=[
+      ["Rozměry příčky", fmtNum(r.delka)+" × "+fmtNum(r.vyska)+" m (plocha "+fmtNum(r.delka*r.vyska)+" m²)"],
+      ["Otvory", otv],
+      ["Čistá plocha", fmtNum(r.A)+" m²"],
+      ["Opláštění", (r.strany===2?"oboustranné":"jednostranné")+", "+(r.vrstvy===2?"dvojité":"jednoduché")+" · "+esc(r.dt)],
+      ["Konstrukce", "CW/UW "+esc(r.cwtyp)+", osová vzdálenost "+Math.round(r.roztec*1000)+" mm"],
+      ["Rezerva desek", fmtNum(r.prorezPct)+" %"]
+    ];
+    var popisRows=popis.map(function(p){ return '<tr><th>'+p[0]+'</th><td>'+p[1]+'</td></tr>'; }).join("");
+    var matRows=r.mat.map(function(m){
+      if(m.grp) return '<tr class="grp"><td colspan="3">'+esc(m.grp)+'</td></tr>';
+      return '<tr><td>'+esc(m.name)+(m.note?'<div class="note">'+esc(m.note)+'</div>':'')+'</td>'+
+             '<td class="q">'+(m.qty||0).toLocaleString("cs-CZ")+'</td><td class="u">'+esc(m.unit)+'</td></tr>';
+    }).join("");
+    var nazev="Poptavka SDK pricka "+fmtNum(r.delka)+"x"+fmtNum(r.vyska)+" m";
+
+    return '<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><title>'+esc(nazev)+'</title><style>'+
+      '@page{size:A4;margin:14mm}'+
+      '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+      'body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1a1d21;font-size:11pt;line-height:1.4}'+
+      '.hd{display:flex;align-items:center;gap:10px;border-bottom:3px solid #064386;padding-bottom:8px;margin-bottom:4px}'+
+      '.hd .sq{width:12px;height:12px;background:#e02125;border-radius:2px}'+
+      '.hd h1{margin:0;font-size:16pt;color:#064386;flex:1}'+
+      '.hd .d{font-size:9.5pt;color:#6b7078}'+
+      'h2{font-size:9.5pt;text-transform:uppercase;letter-spacing:.5px;color:#6b7078;margin:16px 0 6px}'+
+      'table{width:100%;border-collapse:collapse}'+
+      '.popis th{text-align:left;width:32%;font-weight:600;color:#6b7078;padding:4px 8px 4px 0;vertical-align:top}'+
+      '.popis td{padding:4px 0;vertical-align:top}'+
+      '.mat th,.mat td{padding:5px 8px;border-bottom:1px solid #e2e5e9;text-align:left;vertical-align:top}'+
+      '.mat thead th{border-bottom:2px solid #e02125;font-size:9pt;color:#6b7078}'+
+      '.mat td.q{text-align:right;font-weight:700;white-space:nowrap}'+
+      '.mat td.u{color:#6b7078;white-space:nowrap;width:1%}'+
+      '.mat tr.grp td{font-weight:800;color:#064386;font-size:9pt;text-transform:uppercase;letter-spacing:.4px;border-bottom:none;padding-top:10px}'+
+      '.note{font-size:8.5pt;color:#6b7078}'+
+      'tr{page-break-inside:avoid}'+
+      '.ft{margin-top:18px;padding-top:8px;border-top:1px solid #e2e5e9;font-size:9pt;color:#b3161a;font-weight:600}'+
+      '</style></head><body>'+
+      '<div class="hd"><span class="sq"></span><h1>Poptávka materiálu – SDK příčka</h1><span class="d">STAVIMEX · '+datum+'</span></div>'+
+      '<h2>Popis příčky</h2><table class="popis">'+popisRows+'</table>'+
+      '<h2>Materiál</h2><table class="mat"><thead><tr><th>Položka</th><th style="text-align:right">Množství</th><th>MJ</th></tr></thead><tbody>'+matRows+'</tbody></table>'+
+      '<div class="ft">Pouze orientační odhad materiálu – množství i skladbu ověřte před objednávkou podle projektu a systému výrobce.</div>'+
+      '</body></html>';
+  }
+
+  function printSheet(){
+    var f=document.createElement("iframe");
+    f.setAttribute("aria-hidden","true");
+    f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(f);
+    var w=f.contentWindow, d=w.document;
+    d.open(); d.write(buildPrintHtml()); d.close();
+    var done=false;
+    function cleanup(){ if(done) return; done=true; setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); },500); }
+    w.addEventListener("afterprint",cleanup);
+    setTimeout(function(){
+      try{ w.focus(); w.print(); }
+      catch(e){ $("#cStat").textContent="Tisk se nepodařilo spustit."; }
+      setTimeout(cleanup,60000); // pojistka pro prohlížeče bez afterprint
+    },150);
+  }
+
   $("#cOtvAdd").onclick=function(){ addOpening("Okno",1500,1500,1,false); render(); };
   $("#cHelpBtn").onclick=function(){ $("#cHelpBox").classList.toggle("open"); };
   ["#cDelka","#cVyska","#cDeska","#cCw","#cSroub","#cRoztec","#cProrez"].forEach(function(s){ $(s).addEventListener("input",render); $(s).addEventListener("change",render); });
@@ -337,7 +430,7 @@
     var subj="Poptávka SDK příčka "+fmtNum(r.delka)+"×"+fmtNum(r.vyska)+" m";
     window.location.href="mailto:"+encodeURIComponent(POPTAVKA_EMAIL)+"?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(buildText());
   };
-  $("#cPrint").onclick=function(){ window.print(); };
+  $("#cPrint").onclick=printSheet;
 
   // start – jeden výchozí otvor (dveře), stejně jako v katalogu
   addOpening("Dveře",800,1970,1,false);
